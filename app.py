@@ -14,7 +14,7 @@ import pdfplumber
 APP_TITLE = "Buscador Jurídico Yucatán"
 BASE_URL = "https://www.yucatan.gob.mx/gobierno/diario_oficial.php"
 HEADERS = {
-    "User-Agent": "BuscadorJuridicoYucatan/0.2 (consulta de publicaciones oficiales; uso personal)"
+    "User-Agent": "BuscadorJuridicoYucatan/0.3 (consulta de publicaciones oficiales; uso personal)"
 }
 STATE_FILE = "vigilancia.json"
 TIMEOUT = 30
@@ -24,9 +24,8 @@ st.title("⚖️ Buscador Jurídico Yucatán")
 st.write("Busca nombres de personas o números de expediente dentro de las ediciones PDF del Diario Oficial del Gobierno del Estado de Yucatán.")
 
 st.info(
-    "Fuente única de esta versión: Diario Oficial de Yucatán. El programa consulta las páginas diarias "
-    "del periodo elegido, identifica PDF enlazados y busca coincidencias en el texto extraíble. "
-    "No consulta boletines judiciales ni otras fuentes."
+    "Fuente única: Diario Oficial de Yucatán. El programa consulta las páginas oficiales de las fechas seleccionadas, "
+    "identifica PDF enlazados y busca coincidencias en el texto extraíble. No consulta boletines judiciales ni otras fuentes."
 )
 
 def normalize(value):
@@ -68,7 +67,6 @@ def extract_pdf_links(day, html, page_url):
         if ".pdf" in href.lower() and href not in seen:
             seen.add(href)
             links.append({"date": day.isoformat(), "label": label, "url": href, "page_url": page_url})
-    # Some editions expose a PDF URL in an embedded object or iframe.
     for tag in soup.find_all(["iframe", "embed", "object"]):
         candidate = tag.get("src") or tag.get("data")
         if candidate:
@@ -92,7 +90,6 @@ def find_matches(pages, terms):
         for original, term in normalized_terms:
             if not term or term not in normalized_text:
                 continue
-            # Find a readable contextual excerpt; accent/case-insensitive detection is authoritative.
             plain = re.sub(r"\s+", " ", text).strip()
             low_plain = plain.casefold()
             low_term = original.casefold()
@@ -104,13 +101,17 @@ def find_matches(pages, terms):
             matches.append({"term": original, "page": page_no, "excerpt": excerpt})
     return matches
 
-def day_range(days):
+def get_selected_dates(period):
     today = date.today()
+    if period == "Diario Oficial de hoy":
+        return [today]
+    if period == "Diario Oficial del día anterior":
+        return [today - timedelta(days=1)]
+    if period == "Diario Oficial de los últimos 3 días":
+        return [today - timedelta(days=i) for i in (2, 1, 0)]
+    days = int(period.replace("Últimos ", "").replace(" días", ""))
     start = today - timedelta(days=days - 1)
-    current = start
-    while current <= today:
-        yield current
-        current += timedelta(days=1)
+    return [start + timedelta(days=i) for i in range(days)]
 
 state = read_state()
 
@@ -118,11 +119,24 @@ with st.sidebar:
     st.header("Parámetros de búsqueda")
     names = st.text_area("Nombres de las partes (uno por línea)", placeholder="Juan Pérez López\nMaría del Carmen Gómez")
     cases = st.text_area("Números de expediente (uno por línea)", placeholder="509/2024\n452/2025")
-    days = st.selectbox("Periodo", [7, 15, 30, 60, 90], index=2, format_func=lambda x: f"Últimos {x} días")
+    period = st.selectbox(
+        "Periodo de publicación",
+        [
+            "Diario Oficial de hoy",
+            "Diario Oficial del día anterior",
+            "Diario Oficial de los últimos 3 días",
+            "Últimos 7 días",
+            "Últimos 15 días",
+            "Últimos 30 días",
+            "Últimos 60 días",
+            "Últimos 90 días",
+        ],
+        index=5,
+    )
     search_clicked = st.button("Buscar en Diario Oficial", type="primary", use_container_width=True)
     st.divider()
     st.subheader("Vigilancia")
-    st.caption("Guarda los términos para reutilizarlos en próximas búsquedas. Para revisar automáticamente cada día, consulta las instrucciones del README.")
+    st.caption("Guarda los términos para reutilizarlos en próximas búsquedas. La revisión automática diaria es una mejora posterior.")
     save_clicked = st.button("Guardar términos", use_container_width=True)
     load_clicked = st.button("Cargar términos guardados", use_container_width=True)
 
@@ -148,27 +162,26 @@ if search_clicked:
     if not terms:
         st.error("Escribe al menos un nombre o número de expediente.")
     else:
+        selected_dates = get_selected_dates(period)
         discovered = []
         page_errors = []
         pdf_errors = []
         pages_checked = 0
         unique_pdf_urls = set()
-        dates = list(day_range(days))
         progress = st.progress(0, text="Preparando búsqueda…")
-        status = st.empty()
 
-        for idx, day in enumerate(dates):
+        for idx, day in enumerate(selected_dates):
             try:
                 page_url, html = get_html_for_day(day)
                 pages_checked += 1
-                pdfs, page_text = extract_pdf_links(day, html, page_url)
+                pdfs, _ = extract_pdf_links(day, html, page_url)
                 for item in pdfs:
                     if item["url"] not in unique_pdf_urls:
                         unique_pdf_urls.add(item["url"])
                         discovered.append(item)
             except requests.RequestException as exc:
                 page_errors.append({"date": day.isoformat(), "url": f"{BASE_URL}?f={day.isoformat()}", "error": str(exc)[:220]})
-            progress.progress((idx + 1) / len(dates), text=f"Revisando página del {day.strftime('%d/%m/%Y')}…")
+            progress.progress((idx + 1) / len(selected_dates), text=f"Revisando página del {day.strftime('%d/%m/%Y')}…")
             time.sleep(0.12)
 
         results = []
@@ -186,21 +199,18 @@ if search_clicked:
 
         now = datetime.now().isoformat(timespec="seconds")
         old_seen = set(state.get("seen_matches", []))
-        new_matches = []
         for result in results:
             for hit in result["hits"]:
-                key = f"{result['url']}|{hit['term']}|{hit['page']}"
-                if key not in old_seen:
-                    new_matches.append(key)
-                    old_seen.add(key)
+                old_seen.add(f"{result['url']}|{hit['term']}|{hit['page']}")
         state["terms"] = list(dict.fromkeys(terms))
         state["seen_matches"] = list(old_seen)
         state["last_scan"] = now
         write_state(state)
 
         st.subheader("Resultados")
-        st.write(f"**Periodo:** {dates[0].strftime('%d/%m/%Y')} al {dates[-1].strftime('%d/%m/%Y')}")
-        st.write(f"**Páginas diarias consultadas:** {pages_checked}/{len(dates)}")
+        st.write(f"**Periodo seleccionado:** {period}")
+        st.write(f"**Fechas consultadas:** {selected_dates[0].strftime('%d/%m/%Y')} — {selected_dates[-1].strftime('%d/%m/%Y')}")
+        st.write(f"**Páginas diarias consultadas correctamente:** {pages_checked}/{len(selected_dates)}")
         st.write(f"**PDF únicos detectados:** {len(discovered)}")
         st.write(f"**Documentos con coincidencias:** {len(results)}")
 
@@ -229,10 +239,10 @@ if search_clicked:
                 for err in pdf_errors:
                     st.markdown(f"- [{err['date']} · PDF]({err['url']}) — {err['error']}")
 
-        st.caption(f"Última búsqueda ejecutada: {now}. Términos guardados para la siguiente sesión.")
-        st.caption("El sistema busca coincidencias textuales; no determina por sí solo la validez o el efecto procesal de una publicación.")
+        st.caption(f"Última búsqueda ejecutada: {now}.")
+        st.caption("La búsqueda localiza coincidencias textuales; verifica siempre el documento oficial.")
 
 st.divider()
 st.subheader("Fuente consultada")
 st.markdown(f"- [Diario Oficial del Gobierno del Estado de Yucatán]({BASE_URL})")
-st.caption("No se consulta ninguna otra fuente en esta versión. La página oficial permite abrir ediciones por fecha mediante el parámetro de fecha.")
+st.caption("Esta versión consulta exclusivamente el Diario Oficial de Yucatán.")
