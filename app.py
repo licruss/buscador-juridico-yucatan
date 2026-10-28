@@ -182,9 +182,21 @@ def extract_court(text, match_pos):
 
    return court_text[:180].strip()
 def find_matches(pages, terms):
-    matches = []
-    normalized_terms = [(term, normalize(term)) for term in terms if normalize(term)]
-    for page_no, text in pages:
+    def find_matches(pages, terms):
+   matches = []
+   normalized_terms = [
+       (term, normalize(term))
+       for term in terms
+       if normalize(term)
+   ]
+
+   page_texts = list(pages)
+
+   for page_index, (page_no, text) in enumerate(page_texts):
+       previous_text = " ".join(
+           page_texts[i][1] or ""
+           for i in range(max(0, page_index - 2), page_index)
+       )
         normalized_text = normalize(text)
         for original, term in normalized_terms:
             if not term or term not in normalized_text:
@@ -197,7 +209,9 @@ def find_matches(pages, terms):
                 excerpt = plain[max(0, pos - 180): min(len(plain), pos + len(original) + 260)]
             else:
                 excerpt = plain[:420]
-            court = extract_court(plain, pos)
+            combined_text = previous_text + "\n" + plain
+            combined_pos = len(previous_text) + 1 + pos
+            court = extract_court(combined_text, combined_pos
             matches.append({
                 "term": original,
                 "page": page_no,
