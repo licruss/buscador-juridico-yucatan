@@ -19,6 +19,30 @@ HEADERS = {
 }
 STATE_FILE = "vigilancia.json"
 TIMEOUT = 30
+MAX_RETRIES = 3
+RETRY_DELAY = 1.5
+
+
+def download_with_retry(url):
+   last_error = None
+
+   for attempt in range(MAX_RETRIES):
+       try:
+           response = requests.get(
+               url,
+               headers=HEADERS,
+               timeout=(10, TIMEOUT)
+           )
+           response.raise_for_status()
+           return response
+
+       except requests.RequestException as exc:
+           last_error = exc
+
+           if attempt < MAX_RETRIES - 1:
+               time.sleep(RETRY_DELAY * (attempt + 1))
+
+   raise last_error
 
 st.set_page_config(page_title=APP_TITLE, page_icon="⚖️", layout="wide")
 st.markdown("""
@@ -99,7 +123,7 @@ def write_state(data):
 
 def get_html_for_day(day):
     url = f"{BASE_URL}?f={day.isoformat()}"
-    response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+    response = download_with_retry(url)
     response.raise_for_status()
     return url, response.text
 
@@ -122,7 +146,7 @@ def extract_pdf_links(day, html, page_url):
     return links, soup.get_text(" ", strip=True)
 
 def extract_pdf_pages(pdf_url):
-    response = requests.get(pdf_url, headers=HEADERS, timeout=TIMEOUT)
+    response = download_with_retry(pdf_url)
     response.raise_for_status()
     with pdfplumber.open(io.BytesIO(response.content)) as pdf:
         return [(i + 1, page.extract_text() or "") for i, page in enumerate(pdf.pages)]
