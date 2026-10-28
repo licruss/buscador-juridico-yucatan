@@ -67,11 +67,11 @@ Diario Oficial del Gobierno del Estado de Yucatán
 </div>
 </div>
 """, unsafe_allow_html=True)
-st.write("Busca nombres de personas o números de expediente dentro de las ediciones PDF del Diario Oficial del Gobierno del Estado de Yucatán.")
+st.write("Revisa el Diario Oficial del Estado de Yucatán de una manera mas sencilla. Busca por nombre o número de expediente. Puedes revisar simultáneamente todos los expedientes que necesites.")
 
 st.info(
     "Fuente única: Diario Oficial de Yucatán. El programa consulta las páginas oficiales de las fechas seleccionadas, "
-    "identifica PDF enlazados y busca coincidencias en el texto extraíble. No consulta boletines judiciales ni otras fuentes."
+    "identifica PDF enlazados y busca coincidencias en el texto extraíble. No consulta boletines judiciales ni otras fuentes. Esta página no es oficial y esta sujetas a errores de red."
 )
 
 def normalize(value):
