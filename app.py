@@ -54,7 +54,7 @@ margin-bottom:24px;">
 <div style="color:#D4AF62;font-size:29px;font-weight:800;
 letter-spacing:2px;">PASANTE WEB</div>
 <div style="color:#D0D0D0;font-size:12px;letter-spacing:2px;">
-BUSCADOR JURÍDICO · YUCATÁN
+BUSCADOR JURÍDICO · YUCATÁN · ABOGADOS Y PASANTES.
 </div>
 </div>
 </div>
