@@ -12,7 +12,7 @@ import streamlit as st
 from bs4 import BeautifulSoup
 import pdfplumber
 
-APP_TITLE = "Buscador Jurídico Yucatán"
+APP_TITLE = "Pasante Web"
 BASE_URL = "https://www.yucatan.gob.mx/gobierno/diario_oficial.php"
 HEADERS = {
     "User-Agent": "BuscadorJuridicoYucatan/0.3 (consulta de publicaciones oficiales; uso personal)"
@@ -21,7 +21,29 @@ STATE_FILE = "vigilancia.json"
 TIMEOUT = 30
 
 st.set_page_config(page_title=APP_TITLE, page_icon="⚖️", layout="wide")
-st.title("⚖️ Buscador Jurídico Yucatán")
+st.markdown("""
+<div style="background:linear-gradient(135deg,#101010,#242424);
+border:1px solid #D4AF62;border-radius:16px;padding:25px 20px;
+margin-bottom:24px;">
+<div style="display:flex;align-items:center;gap:16px;">
+<div style="font-size:46px;color:#D4AF62;">⚖</div>
+<div>
+<div style="color:#D4AF62;font-size:29px;font-weight:800;
+letter-spacing:2px;">PASANTE WEB</div>
+<div style="color:#D0D0D0;font-size:12px;letter-spacing:2px;">
+BUSCADOR JURÍDICO · YUCATÁN
+</div>
+</div>
+</div>
+<div style="border-top:1px solid #66532D;margin-top:20px;
+padding-top:15px;color:#F4F4F4;font-size:17px;">
+Consulta jurídica oficial
+</div>
+<div style="color:#BBBBBB;font-size:13px;margin-top:6px;">
+Diario Oficial del Gobierno del Estado de Yucatán
+</div>
+</div>
+""", unsafe_allow_html=True)
 st.write("Busca nombres de personas o números de expediente dentro de las ediciones PDF del Diario Oficial del Gobierno del Estado de Yucatán.")
 
 st.info(
