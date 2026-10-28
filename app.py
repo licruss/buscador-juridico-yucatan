@@ -45,7 +45,7 @@ div[data-testid="stExpander"] {
 }
 </style>
 """, unsafe_allow_html=True)
-<div style="background:linear-gradient(135deg,#101010,#242424);
+st.markdown("""<div style="background:linear-gradient(135deg,#101010,#242424);
 border:1px solid #D4AF62;border-radius:16px;padding:25px 20px;
 margin-bottom:24px;">
 <div style="display:flex;align-items:center;gap:16px;">
