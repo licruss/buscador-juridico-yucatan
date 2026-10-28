@@ -150,7 +150,37 @@ def extract_pdf_pages(pdf_url):
     response.raise_for_status()
     with pdfplumber.open(io.BytesIO(response.content)) as pdf:
         return [(i + 1, page.extract_text() or "") for i, page in enumerate(pdf.pages)]
+def extract_court(text, match_pos):
+   if match_pos < 0:
+       return "No identificado"
 
+   before = text[max(0, match_pos - 1800):match_pos]
+
+   candidates = list(
+       re.finditer(r"\bJUZGADO\b", before, re.IGNORECASE)
+   )
+
+   if not candidates:
+       return "No identificado"
+
+   start = candidates[-1].start()
+   court_text = before[start:]
+
+   court_text = re.split(
+       r"\b(EXPEDIENTE|JUICIO|ASUNTO|PROMOVENTE|"
+       r"DEMANDANTE|NOTIFICACIÓN|EMPLAZAMIENTO|"
+       r"SE HACE SABER)\b",
+       court_text,
+       maxsplit=1,
+       flags=re.IGNORECASE,
+   )[0]
+
+   court_text = re.sub(r"\s+", " ", court_text).strip(" :-–—,;.")
+
+   if len(court_text) < 8:
+       return "No identificado"
+
+   return court_text[:180].strip()
 def find_matches(pages, terms):
     matches = []
     normalized_terms = [(term, normalize(term)) for term in terms if normalize(term)]
@@ -167,7 +197,13 @@ def find_matches(pages, terms):
                 excerpt = plain[max(0, pos - 180): min(len(plain), pos + len(original) + 260)]
             else:
                 excerpt = plain[:420]
-            matches.append({"term": original, "page": page_no, "excerpt": excerpt})
+            court = extract_court(plain, pos)
+            matches.append({
+                "term": original,
+                "page": page_no,
+                "excerpt": excerpt,
+                "court": court
+            })
     return matches
 
 def get_selected_dates(period):
@@ -291,6 +327,7 @@ if search_clicked:
                     st.markdown(f"[Abrir página de esa edición]({result['page_url']})")
                     for hit in result["hits"]:
                         st.markdown(f"**Término:** `{hit['term']}` · **Página PDF:** {hit['page']}")
+st.markdown(f"**Juzgado identificado:** {hit.get('court', 'No identificado')}")
                         st.write(hit["excerpt"] or "Se detectó la coincidencia, pero no se pudo preparar el fragmento.")
         else:
             st.warning(
