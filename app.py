@@ -4,6 +4,7 @@ import json
 import time
 import unicodedata
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from urllib.parse import urljoin
 
 import requests
@@ -102,7 +103,7 @@ def find_matches(pages, terms):
     return matches
 
 def get_selected_dates(period):
-    today = date.today()
+    today = datetime.now (ZoneInfo("America/Merida")).date()
     if period == "Diario Oficial de hoy":
         return [today]
     if period == "Diario Oficial del día anterior":
@@ -197,7 +198,7 @@ if search_clicked:
             pdf_progress.progress((idx + 1) / max(1, len(discovered)), text=f"Leyendo documento {idx + 1} de {len(discovered)}…")
             time.sleep(0.12)
 
-        now = datetime.now().isoformat(timespec="seconds")
+        now = datetime.now(ZoneInfo("America/Merida")).isoformat(timespec="seconds")
         old_seen = set(state.get("seen_matches", []))
         for result in results:
             for hit in result["hits"]:
