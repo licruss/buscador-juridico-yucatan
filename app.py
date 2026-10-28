@@ -22,6 +22,29 @@ TIMEOUT = 30
 
 st.set_page_config(page_title=APP_TITLE, page_icon="⚖️", layout="wide")
 st.markdown("""
+<style>
+.stButton > button {
+   background-color: #D4AF62;
+   color: #101010;
+   border: 1px solid #D4AF62;
+   border-radius: 10px;
+   font-weight: 700;
+   transition: all 0.2s ease;
+}
+.stButton > button:hover {
+   background-color: #E8CB83;
+   color: #101010;
+   border-color: #E8CB83;
+}
+div[data-testid="stAlert"] {
+   border-radius: 10px;
+}
+div[data-testid="stExpander"] {
+   border: 1px solid #66532D;
+   border-radius: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
 <div style="background:linear-gradient(135deg,#101010,#242424);
 border:1px solid #D4AF62;border-radius:16px;padding:25px 20px;
 margin-bottom:24px;">
