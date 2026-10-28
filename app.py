@@ -154,7 +154,7 @@ def extract_court(text, match_pos):
    if match_pos < 0:
        return "No identificado"
 
-   before = text[max(0, match_pos - 1800):match_pos]
+   before = text[:match_pos]
 
    candidates = list(
        re.finditer(r"\bJUZGADO\b", before, re.IGNORECASE)
