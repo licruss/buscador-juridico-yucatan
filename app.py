@@ -182,7 +182,6 @@ def extract_court(text, match_pos):
 
    return court_text[:180].strip()
 def find_matches(pages, terms):
-    def find_matches(pages, terms):
    matches = []
    normalized_terms = [
        (term, normalize(term))
@@ -197,28 +196,39 @@ def find_matches(pages, terms):
            page_texts[i][1] or ""
            for i in range(max(0, page_index - 2), page_index)
        )
-        normalized_text = normalize(text)
-        for original, term in normalized_terms:
-            if not term or term not in normalized_text:
-                continue
-            plain = re.sub(r"\s+", " ", text).strip()
-            low_plain = plain.casefold()
-            low_term = original.casefold()
-            pos = low_plain.find(low_term)
-            if pos >= 0:
-                excerpt = plain[max(0, pos - 180): min(len(plain), pos + len(original) + 260)]
-            else:
-                excerpt = plain[:420]
-            combined_text = previous_text + "\n" + plain
-            combined_pos = len(previous_text) + 1 + pos
-            court = extract_court(combined_text, combined_pos
-            matches.append({
-                "term": original,
-                "page": page_no,
-                "excerpt": excerpt,
-                "court": court
-            })
-    return matches
+
+       normalized_text = normalize(text)
+
+       for original, term in normalized_terms:
+           if not term or term not in normalized_text:
+               continue
+
+           plain = re.sub(r"\s+", " ", text or "").strip()
+           low_plain = plain.casefold()
+           low_term = original.casefold()
+           pos = low_plain.find(low_term)
+
+           if pos >= 0:
+               excerpt = plain[
+                   max(0, pos - 180):
+                   min(len(plain), pos + len(original) + 260)
+               ]
+
+               combined_text = previous_text + "\n" + plain
+               combined_pos = len(previous_text) + 1 + pos
+               court = extract_court(combined_text, combined_pos)
+           else:
+               excerpt = plain[:420]
+               court = "No identificado"
+
+           matches.append({
+               "term": original,
+               "page": page_no,
+               "excerpt": excerpt,
+               "court": court
+           })
+
+   return matches
 
 def get_selected_dates(period):
     today = datetime.now (ZoneInfo("America/Merida")).date()
