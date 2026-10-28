@@ -60,11 +60,10 @@ BUSCADOR JURÍDICO · YUCATÁN
 </div>
 <div style="border-top:1px solid #66532D;margin-top:20px;
 padding-top:15px;color:#F4F4F4;font-size:17px;">
-Consulta jurídica oficial
+Sistema Único de Revisión del Diario Oficial del Estado de Yucatán.
 </div>
 <div style="color:#BBBBBB;font-size:13px;margin-top:6px;">
-Diario Oficial del Gobierno del Estado de Yucatán
-</div>
+Sistematización de búsqueda</div>
 </div>
 """, unsafe_allow_html=True)
 st.write("Revisa el Diario Oficial del Estado de Yucatán de una manera mas sencilla. Busca por nombre o número de expediente. Puedes revisar simultáneamente todos los expedientes que necesites.")
