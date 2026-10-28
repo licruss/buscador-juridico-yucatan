@@ -327,7 +327,7 @@ if search_clicked:
                     st.markdown(f"[Abrir página de esa edición]({result['page_url']})")
                     for hit in result["hits"]:
                         st.markdown(f"**Término:** `{hit['term']}` · **Página PDF:** {hit['page']}")
-st.markdown(f"**Juzgado identificado:** {hit.get('court', 'No identificado')}")
+                        st.markdown(f"**Juzgado identificado:** {hit.get('court', 'No identificado')}")
                         st.write(hit["excerpt"] or "Se detectó la coincidencia, pero no se pudo preparar el fragmento.")
         else:
             st.warning(
