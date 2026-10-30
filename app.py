@@ -284,9 +284,6 @@ if save_clicked:
         write_state(state)
         st.success(f"Se guardaron {len(state['terms'])} términos en este equipo.")
 
-if state.get("terms"):
-    st.caption("Términos guardados: " + " · ".join(state["terms"]))
-
 if search_clicked:
     if not terms:
         st.error("Escribe al menos un nombre o número de expediente.")
